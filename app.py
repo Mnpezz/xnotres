@@ -636,10 +636,21 @@ def delete_blog_page(blog_id):
     return render_template('delete_blog.html', blog=blog)
 
 def init_db():
+    logger.info("Initializing database...")
     with app.app_context():
-        db.drop_all()  # This will drop all existing tables
-        db.create_all()  # This will create all tables defined in your models
-        print("Database initialized.")
+        try:
+            # Check if the database needs to be initialized
+            engine = db.engine
+            inspector = db.inspect(engine)
+            if not inspector.has_table("gallery"):
+                logger.info("Creating database tables...")
+                db.create_all()
+                logger.info("Database tables created successfully.")
+            else:
+                logger.info("Database tables already exist.")
+        except Exception as e:
+            logger.error(f"An error occurred while initializing the database: {str(e)}")
+            raise
 
 @app.cli.command("init-db")
 def init_db_command():
@@ -694,6 +705,9 @@ def delete_gallery_comment(comment_id):
 def about():
     return render_template('about.html')
 
-if __name__ == '__main__':
+# Move this block to the end of the file, outside of any function
+with app.app_context():
     init_db()
+
+if __name__ == '__main__':
     app.run(debug=True)
