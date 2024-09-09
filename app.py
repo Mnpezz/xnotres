@@ -632,9 +632,14 @@ def delete_blog_page(blog_id):
 
 def init_db():
     with app.app_context():
-        db.drop_all()  # This will drop all existing tables
-        db.create_all()  # This will create all tables defined in your models
-        print("Database initialized.")
+        # Check if the database needs to be initialized
+        engine = db.engine
+        inspector = db.inspect(engine)
+        if not inspector.has_table("gallery"):
+            db.create_all()
+            print("Database initialized.")
+        else:
+            print("Database already contains the tables.")
 
 @app.cli.command("init-db")
 def init_db_command():
