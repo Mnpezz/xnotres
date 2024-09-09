@@ -14,10 +14,15 @@ from markdown import markdown
 import bleach
 from flask_wtf import FlaskForm
 from wtforms import BooleanField
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gallery.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/gallery.db'
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'zip'}
 app.config['ADMIN_NANO_ADDRESS'] = 'nano_3urn99zwefm5q8miwqkiypfqx3ikh59ujpiuggewnynoke6eqpntgu78do7j'
@@ -632,14 +637,9 @@ def delete_blog_page(blog_id):
 
 def init_db():
     with app.app_context():
-        # Check if the database needs to be initialized
-        engine = db.engine
-        inspector = db.inspect(engine)
-        if not inspector.has_table("gallery"):
-            db.create_all()
-            print("Database initialized.")
-        else:
-            print("Database already contains the tables.")
+        db.drop_all()  # This will drop all existing tables
+        db.create_all()  # This will create all tables defined in your models
+        print("Database initialized.")
 
 @app.cli.command("init-db")
 def init_db_command():
