@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <title>About XNOTRES</title>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="content">
+        <h1>About XNOTRES</h1>
+        <section>
+            <h2>Welcome to XNOTRES</h2>
+            <p>XNOTRES is a unique platform that combines content creation with NANO cryptocurrency, allowing users to share galleries and blog posts while supporting creators through a transparent payment system.</p>
+        </section>
+        
+        <section>
+            <h2>How It Works</h2>
+            <h3>Creating Content</h3>
+            <p>When you create a gallery or blog post, you pay a small fee in NANO. This fee is calculated based on the file storage size of your content. The larger your files, the higher the fee. This helps maintain the platform and ensures fair usage.</p>
+            
+            <h3>Viewing Content</h3>
+            <p>Some content may require a NANO payment to view. The price is set by the creator. This payment goes directly to the content creator.</p>
+            
+            <h3>Commenting</h3>
+            <p>When you comment on a post, a small NANO payment is required. This payment goes directly to the content creator. If you're commenting on your own content, the payment returns to you.</p>
+            
+            <h3>Liking Content</h3>
+            <p>Liking a post requires a minimal NANO payment. This payment goes to the platform moderators to support the maintenance and improvement of XNOTRES.</p>
+            
+            <h3>Deleting Content</h3>
+            <p>To delete your own content, visit the content page and click the "Delete" button. You'll be required to make a small NANO payment to confirm the deletion. This payment is returned to you immediately after the content is deleted.</p>
+        </section>
+        
+    </div>
+    {% include 'footer.html' %}
+</body>
+</html>

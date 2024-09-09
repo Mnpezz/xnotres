@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <title>Moderator Dashboard</title>
+    <style>
+        .gallery, .blog-post {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .gallery-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .gallery-image {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: cover;
+        }
+        .blog-cover {
+            max-width: 200px;
+            max-height: 200px;
+            display: block;
+            margin: 0 auto 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button.deny {
+            background-color: #f44336;
+        }
+        button.deny:hover {
+            background-color: #d32f2f;
+        }
+        .cleanup-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .cleanup-button:hover {
+            background-color: #f57c00;
+        }
+        .blog-description {
+            max-height: 100px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #f9f9f9;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .blog-content {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="content">
+        <h1>Moderator Dashboard</h1>
+        
+        <!-- Add this button at the top of the content div -->
+        <button onclick="cleanupGalleries()" class="cleanup-button">Cleanup Galleries and Blogs</button>
+        
+        <h2>Pending Galleries</h2>
+        {% for gallery in galleries %}
+            <div class="gallery">
+                <h3>{{ gallery.name }}</h3>
+                <p>Price: {{ gallery.price }} NANO</p>
+<!--                 <p>Total Size: {{ "%.2f"|format(gallery.total_size) }} MB</p>
+ -->                <div class="gallery-images">
+                    {% for image in gallery.images %}
+                        <img src="{{ url_for('uploaded_file', filename=gallery.name + '/' + image) }}" alt="{{ image }}" class="gallery-image">
+                    {% endfor %}
+                </div>
+                <button onclick="approveGallery({{ gallery.id }})">Approve</button>
+                <button class="deny" onclick="denyGallery({{ gallery.id }})">Deny</button>
+            </div>
+        {% endfor %}
+
+        <h2>Pending Blog Posts</h2>
+        {% for blog in blogs %}
+            <div class="blog-post">
+                <h3>{{ blog.title }}</h3>
+                <img src="{{ url_for('uploaded_file', filename=blog.cover_image) }}" alt="Cover Image" class="blog-cover">
+                <div class="blog-description">
+                    <strong>Description:</strong> {{ blog.description }}
+                </div>
+                <p><strong>Price:</strong> {{ blog.price }} NANO</p>
+                <div class="blog-content">
+                    <h4>Full Content:</h4>
+                    <div id="fullContent-{{ blog.id }}">{{ blog.formatted_content|safe }}</div>
+                </div>
+                <button onclick='approveBlog({{ blog.id }})'>Approve</button>
+                <button class="deny" onclick='denyBlog({{ blog.id }})'>Deny</button>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function approveGallery(galleryId) {
+            fetch(`/approve/${galleryId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    }
+                });
+        }
+
+        function denyGallery(galleryId) {
+            fetch(`/deny/${galleryId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    }
+                });
+        }
+
+        function approveBlog(blogId) {
+            fetch(`/approve_blog/${blogId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    }
+                });
+        }
+
+        function denyBlog(blogId) {
+            fetch(`/deny_blog/${blogId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    }
+                });
+        }
+
+        // Add this new function
+        function cleanupGalleries() {
+            if (confirm('Are you sure you want to clean up galleries and blog posts? This will remove any items without associated files.')) {
+                fetch('/cleanup_galleries', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert('Cleanup failed: ' + data.message);
+                        }
+                    });
+            }
+        }
+
+        // Add this function to render the blog content using marked
+        function renderBlogContent() {
+            {% for blog in blogs %}
+            document.getElementById('fullContent-{{ blog.id }}').innerHTML = marked.parse(`{{ blog.content|replace('\n', '\\n')|replace("'", "\\'") }}`);
+            {% endfor %}
+        }
+
+        // Call the function when the page loads
+        renderBlogContent();
+    </script>
+    {% include 'footer.html' %}
+</body>
+</html>

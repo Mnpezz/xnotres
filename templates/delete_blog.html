@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <title>Delete/Tip Blog Post</title>
+    <script src="https://pay.nano.to/latest.js"></script>
+    <style>
+        .creator-address {
+            word-break: break-all;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
+        .creator-address a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .creator-address a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="content">
+        <h1>Delete Blog Post: {{ blog.title }}</h1>
+        <h3>
+        This page is designed for deleting the blog post.
+        <br>
+        If you're not the creator, any NANO sent will be considered a tip to the creator and is non-refundable.
+        <br>
+        If you're the creator, you can delete the blog post here and the fund will be returned to you immediately.
+        </h3>
+        <p>Creator Address: 
+            <span class="creator-address">
+                <a href="https://blocklattice.io/account/{{ blog.creator_address }}" target="_blank" id="creatorAddress">{{ blog.creator_address }}</a>
+            </span>
+        </p>
+        <button onclick="requestDeleteTip()">Delete/Tip Blog Post</button>
+    </div>
+
+    <script>
+        function requestDeleteTip() {
+            fetch('{{ url_for("request_delete", gallery_id=blog.id) }}', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        confirmDeleteTip(data.delete_amount);
+                    } else {
+                        console.error('Error requesting delete:', data.message);
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while requesting delete/tip');
+                });
+        }
+        
+        function confirmDeleteTip(deleteAmount) {
+            const creatorAddress = document.getElementById('creatorAddress').textContent;
+            console.log("Creator address:", creatorAddress);
+            
+            NanoPay.open({
+                title: "Delete/Tip Blog Post Creator",
+                address: creatorAddress,
+                amount: deleteAmount,
+                success: function(block) {
+                    fetch('{{ url_for("delete_blog", blog_id=blog.id) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(block),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            window.location.href = '{{ url_for("index") }}';
+                        } else {
+                            alert('Action failed: ' + data.message);
+                        }
+                    });
+                },
+                cancel: function() {
+                    console.log("Delete/Tip cancelled");
+                }
+            });
+        }
+    </script>
+    {% include 'footer.html' %}
+</body>
+</html>

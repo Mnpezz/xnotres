@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <title>View Photo</title>
+    <script src="https://pay.nano.to/latest.js"></script>
+    
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="content">
+        <h1>Photo Details</h1>
+        <div id="photo-container">
+            {% if photo.is_paid %}
+                <img src="{{ url_for('uploaded_file', filename=photo.filename) }}" alt="{{ photo.filename }}">
+            {% else %}
+                <img src="{{ url_for('uploaded_file', filename=photo.filename) }}" alt="{{ photo.filename }}" style="filter: blur(10px);">
+            {% endif %}
+        </div>
+        <p>Price: {{ photo.price }} NANO</p>
+        {% if not photo.is_paid %}
+            <button onclick="payForPhoto()">Pay to view full resolution</button>
+        {% endif %}
+        <br>
+        <a href="{{ url_for('index') }}">Back to Gallery</a>
+
+        <script>
+            function payForPhoto() {
+                NanoPay.open({
+                    title: "Pay for Photo",
+                    address: '{{ config["ADMIN_NANO_ADDRESS"] }}',
+                    amount: parseFloat('{{ photo.price }}'),
+                    success: function(block) {
+                        fetch('{{ url_for("pay", photo_id=photo.id) }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(block),
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.getElementById('photo-container').innerHTML = '<img src="{{ url_for("uploaded_file", filename=photo.filename) }}" alt="{{ photo.filename }}">';
+                                document.querySelector('button').remove();
+                            }
+                        });
+                    },
+                    cancel: function() {
+                        console.log("Payment cancelled");
+                    }
+                });
+            }
+        </script>
+    </div>
+    {% include 'footer.html' %}
+</body>
+</html>

@@ -1,0 +1,28 @@
+<div class="navbar">
+    <div class="logo">
+        <a href="{{ url_for('index') }}">
+            <img src="{{ url_for('static', filename='images/xnotres.png') }}" alt="XNOTRES">
+        </a>
+    </div>
+    <div class="dropdown" onclick="toggleNavbar()">
+        <i class="fas fa-bars"></i>
+    </div>
+    <div class="nav-links">
+        <a href="{{ url_for('index') }}">Main Page</a>
+        <a href="{{ url_for('upload') }}">Create a Gallery</a>
+        <a href="{{ url_for('upload_blog') }}">Create a Blog Post</a>
+        {% if 'moderator' in session %}
+            <a href="{{ url_for('moderator_view') }}">Admin Dashboard</a>
+            <a href="{{ url_for('moderator_logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('moderator_login_page') }}">Admin Login</a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function toggleNavbar() {
+        var navLinks = document.querySelector('.nav-links');
+        navLinks.classList.toggle('show');
+    }
+</script>

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <title>View Gallery</title>
+    <script src="https://pay.nano.to/latest.js"></script>
+    <style>
+        .content {
+            padding: 20px;
+        }
+        #gallery-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .gallery-image {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .gallery-image:hover {
+            transform: scale(1.05);
+        }
+        .price-info {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.2em;
+            color: #333;
+        }
+        .pay-button {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        .analytics {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.9);
+        }
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 700px;
+        }
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .delete-button {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            background-color: #f44336;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        .social-features {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .like-button, .comment-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+    .comments-section h3 {
+        margin-top: 0;
+        color: #333;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+    }
+
+    .comment-form {
+        margin-top: 20px;
+    }
+
+    .comment-form textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .comment-form button {
+        display: block;
+        width: 200px;
+        margin: 10px 0 0 auto;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .comment-form button:hover {
+        background-color: #45a049;
+    }
+
+    .comments-section {
+        margin-top: 30px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .comment-list {
+        max-height: 400px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+    }
+    .comment {
+        background-color: white;
+        border: 1px solid #e1e1e1;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .comment-content {
+        margin-bottom: 10px;
+    }
+    .comment-meta {
+        font-size: 0.8em;
+        color: #888;
+    }
+    .delete-comment-btn {
+        float: right;
+        background-color: #f44336;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 0.8em;
+    }
+    .delete-comment-btn:hover {
+        background-color: #d32f2f;
+    }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="content">
+        <h1>{{ gallery.name }}</h1>
+        <div id="gallery-container">
+            {% if gallery.is_paid %}
+                {% for image in images %}
+                    <img src="{{ url_for('uploaded_file', filename=gallery.name + '/' + image) }}" alt="{{ image }}" class="gallery-image">
+                {% endfor %}
+            {% else %}
+                <img src="{{ url_for('uploaded_file', filename=gallery.name + '/' + gallery.preview_image) }}" alt="Preview" class="gallery-image">
+            {% endif %}
+        </div>
+        
+        <p class="price-info">Price: {{ gallery.price }} NANO</p>
+        {% if not gallery.is_paid %}
+            <button onclick="payForGallery()" class="pay-button">Pay to view full gallery</button>
+        {% endif %}
+
+        <div class="analytics">
+<!--             <p>Total Size: {{ "%.2f"|format(total_size_mb) }} MB</p>
+ -->            <p>View Count: {{ gallery.view_count }}</p>
+            <p>Number of Photos: {{ images|length }}</p>
+        </div>
+        
+        <!-- Social Features -->
+        <div class="social-features">
+            <button onclick="likeGallery()" class="like-button">Like (<span id="likeCount">{{ gallery.likes }}</span>)</button>
+            <button onclick="toggleCommentForm()" class="comment-button">Add Comment</button>
+        </div>
+
+        <div class="comments-section">
+            <form id="commentForm" class="comment-form" style="display: none;">
+                <textarea name="comment" placeholder="Add a comment" required></textarea>
+                <button type="submit">Post Comment</button>
+            </form>
+            
+            <a href="{{ url_for('delete_tip_page', gallery_id=gallery.id) }}" class="delete-button">Delete Gallery</a>
+
+            <h3>Comments</h3>
+            <div id="commentList" class="comment-list">
+                <!-- Comments will be dynamically added here -->
+            </div>
+        </div>
+        
+
+    </div>
+
+    <div id="imageModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <script>
+
+function requestDeleteTip() {
+        fetch('{{ url_for("request_delete", gallery_id=gallery.id) }}', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    confirmDeleteTip(data.delete_amount);
+                } else {
+                    console.error('Error requesting delete:', data.message);
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while requesting delete/tip');
+            });
+    }
+
+    function confirmDeleteTip(deleteAmount) {
+        const creatorAddress = '{{ gallery.creator_address }}';
+        NanoPay.open({
+            title: "Delete/Tip Gallery Creator",
+            address: creatorAddress,
+            amount: deleteAmount,
+            success: function(block) {
+                fetch('{{ url_for("delete_gallery", gallery_id=gallery.id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(block),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        window.location.href = '{{ url_for("index") }}';
+                    } else {
+                        alert('Action failed: ' + data.message);
+                    }
+                });
+            },
+            cancel: function() {
+                console.log("Delete/Tip cancelled");
+            }
+        });
+    }
+
+function toggleCommentForm() {
+        var commentForm = document.getElementById('commentForm');
+        if (commentForm.style.display === 'none') {
+            commentForm.style.display = 'block';
+        } else {
+            commentForm.style.display = 'none';
+        }
+    }
+
+        function payForGallery() {
+            const creatorAddress = '{{ gallery.creator_address }}';
+            NanoPay.open({
+                title: "Pay for Gallery",
+                address: creatorAddress,
+                amount: parseFloat('{{ gallery.price }}'),
+                success: function(block) {
+                    fetch('{{ url_for("pay", gallery_id=gallery.id) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(block),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        }
+                    });
+                },
+                cancel: function() {
+                    console.log("Payment cancelled");
+                }
+            });
+        }
+        
+        // Image modal functionality
+        var modal = document.getElementById("imageModal");
+        var modalImg = document.getElementById("modalImage");
+        var images = document.getElementsByClassName("gallery-image");
+
+        for (var i = 0; i < images.length; i++) {
+            images[i].onclick = function() {
+                modal.style.display = "block";
+                modalImg.src = this.src;
+            }
+        }
+
+        var span = document.getElementsByClassName("close")[0];
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        function likeGallery() {
+            NanoPay.open({
+                title: "Like Gallery",
+                address: '{{ config["ADMIN_NANO_ADDRESS"] }}',
+                amount: 0.001, // Small amount for liking
+                success: function(block) {
+                    fetch('{{ url_for("like_gallery", gallery_id=gallery.id) }}', { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(block)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('likeCount').textContent = data.likes;
+                        }
+                    });
+                },
+                cancel: function() {
+                    console.log("Like cancelled");
+                }
+            });
+        }
+
+        function showCommentForm() {
+            document.getElementById('commentForm').style.display = 'block';
+        }
+
+    function createCommentHTML(comment) {
+        return `
+            <div class="comment" id="comment-${comment.id}">
+                <div class="comment-content">${comment.content}</div>
+                <div class="comment-meta">
+                    Posted on ${new Date(comment.date_created).toLocaleString()}
+                </div>
+                {% if 'moderator' in session %}
+                    <button onclick="deleteComment(${comment.id})" class="delete-comment-btn">Delete</button>
+                {% endif %}
+            </div>`;
+    }
+
+    function loadComments() {
+        fetch('{{ url_for("get_comments", gallery_id=gallery.id) }}')
+            .then(response => response.json())
+            .then(data => {
+                const commentList = document.getElementById('commentList');
+                commentList.innerHTML = ''; // Clear existing comments
+                data.comments.forEach(comment => {
+                    commentList.insertAdjacentHTML('beforeend', createCommentHTML(comment));
+                });
+            })
+            .catch(error => {
+                console.error('Error loading comments:', error);
+            });
+    }
+
+    document.getElementById('commentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const content = this.comment.value;
+        const creatorAddress = '{{ gallery.creator_address }}';
+        NanoPay.open({
+            title: "Post Comment",
+            address: creatorAddress,
+            amount: 0.001, // Small amount for commenting
+            success: function(block) {
+                fetch('{{ url_for("add_comment", gallery_id=gallery.id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: content, payment: block }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadComments(); // Reload all comments
+                        document.getElementById('commentForm').reset();
+                        document.getElementById('commentForm').style.display = 'none';
+                    } else {
+                        alert('Failed to post comment: ' + data.message);
+                    }
+                });
+            },
+            cancel: function() {
+                console.log("Comment cancelled");
+            }
+        });
+    });
+
+    // Add a new function to delete comments
+    function deleteComment(commentId) {
+        if (confirm('Are you sure you want to delete this comment?')) {
+            fetch(`{{ url_for('delete_gallery_comment', comment_id=0) }}`.replace('0', commentId), {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`comment-${commentId}`).remove();
+                } else {
+                    alert('Failed to delete comment: ' + data.message);
+                }
+            });
+        }
+    }
+
+    // Call loadComments when the page loads
+    loadComments();
+</script>
+{% include 'footer.html' %}
+</body>
+</html>

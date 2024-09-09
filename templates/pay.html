@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pay for Photo</title>
+</head>
+<body>
+    <h1>Pay for Photo</h1>
+    <p>Please send {{ photo.price }} NANO to the following address:</p>
+    <p><strong>{{ photo.payment_address }}</strong></p>
+    <p>After sending the payment, click the button below to check if the payment has been received:</p>
+    <a href="{{ url_for('check_payment', photo_id=photo.id) }}">Check Payment</a>
+    <br>
+    <a href="{{ url_for('view_photo', photo_id=photo.id) }}">Back to Photo</a>
+</body>
+</html>

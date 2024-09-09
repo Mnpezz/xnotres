@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <title>Upload Blog Post</title>
+    <script src="https://pay.nano.to/latest.js"></script>
+   <style>
+        form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"], input[type="number"], input[type="file"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .modal-content button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .modal-content button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="content">
+        <h1>Upload a New Blog Post</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="text" name="title" required placeholder="Blog Title">
+            <textarea name="description" required placeholder="Short Description"></textarea>
+            <textarea name="content" required placeholder="Blog Content (Markdown supported)"></textarea>
+            <input type="file" name="cover_image" accept=".png,.jpg,.jpeg,.gif" required>
+            <input type="number" name="price" step="0.01" min="0" required placeholder="Price in NANO">
+            <input type="hidden" name="creator_address" id="creatorAddress">
+            <input type="submit" value="Upload">
+        </form>
+        <p class="upload-fee">Base upload fee: {{ base_fee }} NANO</p>
+        <p id="dynamicFee"></p>
+    </div>
+
+    <div id="submissionModal" class="modal">
+        <div class="modal-content">
+            <h2>Submission Received</h2>
+            <p>Thank you for your blog post submission. It is currently under review and may take up to 24 hours to be approved.</p>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function calculateFee() {
+            let baseFee = parseFloat('{{ base_fee }}');
+            let feePerMB = parseFloat('{{ fee_per_mb }}');
+            let coverImage = document.querySelector('input[name="cover_image"]').files[0];
+            let imageSizeMB = coverImage ? coverImage.size / (1024 * 1024) : 0;
+            let fee = baseFee + (imageSizeMB * feePerMB);
+            document.getElementById('dynamicFee').textContent = `Estimated upload fee: ${fee.toFixed(6)} NANO`;
+        }
+
+        document.querySelector('input[name="cover_image"]').addEventListener('change', calculateFee);
+
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var formData = new FormData(this);
+            
+            fetch('{{ url_for("upload_blog") }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server response:', data);
+                if (data.success) {
+                    NanoPay.open({
+                        title: "Pay Upload Fee and Verify Address",
+                        address: '{{ config["ADMIN_NANO_ADDRESS"] }}',
+                        amount: data.upload_fee,
+                        success: function(block) {
+                            console.log('NanoPay success:', block);
+                            document.getElementById('creatorAddress').value = block.address;
+                            
+                            var finalFormData = new FormData(document.getElementById('uploadForm'));
+                            
+                            fetch('{{ url_for("finalize_blog_upload") }}', {
+                                method: 'POST',
+                                body: finalFormData
+                            })
+                            .then(response => response.json())
+                            .then(finalData => {
+                                if (finalData.success) {
+                                    showModal();
+                                } else {
+                                    alert('Upload failed: ' + finalData.message);
+                                }
+                            });
+                        },
+                        cancel: function() {
+                            console.log("Upload fee payment cancelled");
+                            alert('Upload cancelled. Your blog post was not published.');
+                        }
+                    });
+                } else {
+                    alert('Upload failed: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during upload: ' + error.message);
+            });
+        });
+
+        function showModal() {
+            document.getElementById('submissionModal').style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById('submissionModal').style.display = "none";
+            window.location.href = '{{ url_for("index") }}';
+        }
+    </script>
+    {% include 'footer.html' %}
+</body>
+</html>
