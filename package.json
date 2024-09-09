@@ -1,6 +1,5 @@
 {
-    "scripts": {
-      "build": "chmod +x build.sh && ./build.sh",
-      "start": "gunicorn app:app"
-    }
+  "scripts": {
+    "build": "chmod +x build.sh && ./build.sh"
   }
+}
