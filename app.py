@@ -162,12 +162,12 @@ def index():
     blogs = BlogPost.query.filter_by(is_approved=True).all()
     
     for gallery in galleries:
-        gallery.total_size = round(gallery.total_size, 2)  # Round to 2 decimal places
+        gallery.total_size = round(gallery.total_size, 2) if gallery.total_size is not None else 0
     
     for blog in blogs:
         blog.short_description = truncate_description(blog.description)
         blog.preview_content = truncate_description(sanitize_markdown(blog.content), max_length=300)
-        blog.total_size = round(os.path.getsize(os.path.join(app.config['UPLOAD_FOLDER'], blog.cover_image)) / (1024 * 1024), 2)  # Size in MB
+        blog.total_size = round(blog.total_size, 2) if blog.total_size is not None else 0
     
     return render_template('index.html', galleries=galleries, blogs=blogs)
 
