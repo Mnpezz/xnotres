@@ -74,8 +74,9 @@ class BlogPost(db.Model):
     is_approved = db.Column(db.Boolean, default=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     creator_address = db.Column(db.String(65), nullable=False)
-    likes = db.Column(db.Integer, default=0)  # Make sure this line is present
+    likes = db.Column(db.Integer, default=0)
     private_comments = db.Column(db.Boolean, default=False)
+    total_size = db.Column(db.Float, nullable=True)  # Add this line
 
 class BlogComment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -166,7 +167,7 @@ def index():
     for blog in blogs:
         blog.short_description = truncate_description(blog.description)
         blog.preview_content = truncate_description(sanitize_markdown(blog.content), max_length=300)
-        blog.total_size = round(blog.total_size, 2)  # Round to 2 decimal places
+        blog.total_size = round(os.path.getsize(os.path.join(app.config['UPLOAD_FOLDER'], blog.cover_image)) / (1024 * 1024), 2)  # Size in MB
     
     return render_template('index.html', galleries=galleries, blogs=blogs)
 
