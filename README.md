@@ -2,6 +2,9 @@
 
 This is a Flask-based web application that allows users to upload and view photo galleries, with payments handled using Nano cryptocurrency. The platform offers a unique blend of content sharing and cryptocurrency integration.
 
+live onrender: https://xnotres.onrender.com/ 
+*It will take up to 50 seconds to boot up the server. Nothing is Permanent.
+
 ## Key Features
 
 1. Gallery Upload: Users can upload multiple images to create a gallery.
